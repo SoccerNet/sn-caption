@@ -3,7 +3,7 @@
 Repository containing all necessary codes to get started on the SoccerNet Dense Video Captioning challenge.
 More information coming soon
 
-<p align="center"><img src="Images/logo.png" width="640"></p>
+<p align="center"><img src="Images/logo-caption.jpg" width="640"></p>
 
 ## How to download the dataset
 
