@@ -1,7 +1,10 @@
 # SoccerNet Dense Video Captioning 
 
-Repository containing all necessary codes to get started on the SoccerNet Dense Video Captioning challenge.
-More information coming soon
+Bring your soccer game experience to life with Dense Video Captioning! This cutting-edge technology highlights the most exciting moments and adds captivating commentaries, immersing you in the action like never before.
+
+The task of Dense Video Captioning consists in generating coherent caption describing soccer actions occured and localizing each caption by a timestamp. For that, you have access to 471 videos from soccer broadcast games available at two resolutions (720p and 224p) with captions. We also provide extracted features at 2 frames per second for an easier use, including the feature provided by the 2021 action spotting challenge winners, Baidu Research. The provided data also includes original comments and versions where referees, coaches, players, and teams have been anonymized or identified, as well as team lineups. The challenge set is composed of 42 separate games.
+
+The [evaluation server](https://eval.ai/web/challenges/challenge-page/1947/overview) is already available for you to submit your predictions.
 
 <p align="center"><img src="Images/logo-caption.jpg" width="640"></p>
 
