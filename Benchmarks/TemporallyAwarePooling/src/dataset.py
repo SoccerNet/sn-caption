@@ -85,8 +85,11 @@ class SoccerNetClips(Dataset):
 
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(path)
-        downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=split, task="caption", verbose=False,randomized=True)
-
+        for s in split:
+            if s == "challenge":
+                downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], task="caption", verbose=False,randomized=True)
+            else:
+                downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], task="caption", verbose=False,randomized=True)
 
         logging.info("Pre-compute clips")
 
@@ -187,7 +190,10 @@ class SoccerNetClipsTesting(Dataset):
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(path)
         for s in split:
-            downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], task="caption", verbose=False,randomized=True)
+            if s == "challenge":
+                downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=[s], task="caption", verbose=False,randomized=True)
+            else:
+                downloader.downloadGames(files=[self.labels, f"1_{self.features}", f"2_{self.features}"], split=[s], task="caption", verbose=False,randomized=True)
 
     def __getitem__(self, index):
         """
@@ -264,6 +270,7 @@ class SoccerNetCaptions(Dataset):
     """
     def __init__(self, path, features="ResNET_TF2_PCA512.npy", split=["train"], version=2, framerate=2, window_size=15):
         self.path = path
+        split = [s for s in split if s!= "challenge"]
         self.listGames = getListGames(split, task="caption")
         self.features = features
         self.window_size_frame = window_size*framerate
