@@ -7,6 +7,7 @@ import zipfile
 import json
 import numpy as np
 import glob
+import argparse
 
 def evaluate(SoccerNet_path, Predictions_path, prediction_file="results_spotting.json", split="test", version=2, framerate=2, metric="loose"):
     # evaluate the prediction with respect to some ground truth
@@ -99,6 +100,8 @@ def evaluate(SoccerNet_path, Predictions_path, prediction_file="results_spotting
         deltas=np.arange(12)*5 + 5
     elif metric == "tight":
         deltas=np.arange(5)*1 + 1
+    elif metric == "medium":
+        deltas = np.array([30])
     # Compute the performances
     a_mAP, a_mAP_per_class, a_mAP_visible, a_mAP_per_class_visible, a_mAP_unshown, a_mAP_per_class_unshown = average_mAP(targets_numpy, detections_numpy, closests_numpy, framerate, deltas=deltas)
     
@@ -185,3 +188,10 @@ def predictions2vector(predictions, num_classes=17, version=2, framerate=2):
             prediction_half2[frame][label] = value
 
     return prediction_half1, prediction_half2
+
+
+def valid_probability(value):
+    fvalue = float(value)
+    if fvalue <= 0 or fvalue > 1:
+        raise argparse.ArgumentTypeError(f"{value} is not a valid probability between 0 and 1")
+    return fvalue

@@ -13,7 +13,7 @@ from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_se
 import random
 
 class VideoEncoder(nn.Module):
-    def __init__(self, input_size=512, num_classes=17, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD"):
+    def __init__(self, input_size=512, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD"):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,hidden_size)
@@ -23,7 +23,6 @@ class VideoEncoder(nn.Module):
 
         self.window_size_frame=window_size * framerate
         self.input_size = input_size
-        self.num_classes = num_classes
         self.framerate = framerate
         self.pool = pool
         self.vlad_k = vlad_k
@@ -36,32 +35,27 @@ class VideoEncoder(nn.Module):
 
         if self.pool == "MAX":
             self.pool_layer = nn.MaxPool1d(self.window_size_frame, stride=1)
-            self.fc = nn.Linear(input_size, self.num_classes+1)
             self.hidden_size = input_size
 
         if self.pool == "MAX++":
             self.pool_layer_before = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
             self.pool_layer_after = nn.MaxPool1d(int(self.window_size_frame/2), stride=1)
-            self.fc = nn.Linear(2*input_size, self.num_classes+1)
             self.hidden_size = input_size * 2
 
 
         if self.pool == "AVG":
             self.pool_layer = nn.AvgPool1d(self.window_size_frame, stride=1)
-            self.fc = nn.Linear(input_size, self.num_classes+1)
             self.hidden_size = input_size
 
         if self.pool == "AVG++":
             self.pool_layer_before = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
             self.pool_layer_after = nn.AvgPool1d(int(self.window_size_frame/2), stride=1)
-            self.fc = nn.Linear(2*input_size, self.num_classes+1)
             self.hidden_size = input_size *2
 
 
         elif self.pool == "NetVLAD":
             self.pool_layer = NetVLAD(cluster_size=self.vlad_k, feature_size=self.input_size,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
             self.hidden_size = input_size * self.vlad_k
 
         elif self.pool == "NetVLAD++":
@@ -69,7 +63,6 @@ class VideoEncoder(nn.Module):
                                             add_batch_norm=True)
             self.pool_layer_after = NetVLAD(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
             self.hidden_size = input_size * self.vlad_k
 
 
@@ -77,7 +70,6 @@ class VideoEncoder(nn.Module):
         elif self.pool == "NetRVLAD":
             self.pool_layer = NetRVLAD(cluster_size=self.vlad_k, feature_size=self.input_size,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
             self.hidden_size = input_size * self.vlad_k
 
         elif self.pool == "NetRVLAD++":
@@ -85,7 +77,6 @@ class VideoEncoder(nn.Module):
                                             add_batch_norm=True)
             self.pool_layer_after = NetRVLAD(cluster_size=int(self.vlad_k/2), feature_size=self.input_size,
                                             add_batch_norm=True)
-            self.fc = nn.Linear(input_size*self.vlad_k, self.num_classes+1)
             self.hidden_size = input_size * self.vlad_k
 
         self.drop = nn.Dropout(p=0.4)
@@ -133,7 +124,7 @@ class DecoderRNN(nn.Module):
         self.lstm = nn.LSTM(embed_size, hidden_size, num_layers=num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, vocab_size)
         self.dropout = nn.Dropout(0.4)
-        self.activation = nn.PReLU()
+        self.activation = nn.ReLU()
         self.num_layers = num_layers
     
     def forward(self, features, captions, lengths):
@@ -175,12 +166,14 @@ class DecoderRNN(nn.Module):
         return sampled_ids
 
 class Video2Caption(nn.Module):
-    def __init__(self, vocab_size, weights=None, input_size=512, num_classes=17, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD", embed_size=256, hidden_size=512, max_seq_length=50):
+    def __init__(self, vocab_size, weights=None, input_size=512, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD", embed_size=256, hidden_size=512, teacher_forcing_ratio=1, num_layers=2, max_seq_length=50, weights_encoder=None, freeze_encoder=False):
         super(Video2Caption, self).__init__()
-        self.encoder = VideoEncoder(input_size, num_classes, vlad_k, window_size, framerate, pool)
-        self.decoder = DecoderRNN(self.encoder.hidden_size, embed_size, hidden_size, vocab_size)
+        self.encoder = VideoEncoder(input_size, vlad_k, window_size, framerate, pool)
+        self.decoder = DecoderRNN(self.encoder.hidden_size, embed_size, hidden_size, vocab_size, num_layers)
         self.load_weights(weights=weights)
+        self.load_encoder(weights_encoder=weights_encoder, freeze_encoder=freeze_encoder)
         self.vocab_size = vocab_size
+        self.teacher_forcing_ratio = teacher_forcing_ratio
 
     def load_weights(self, weights=None):
         if(weights is not None):
@@ -189,19 +182,31 @@ class Video2Caption(nn.Module):
             self.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(weights, checkpoint['epoch']))
+            
+    def load_encoder(self, weights_encoder=None, freeze_encoder=False):
+        if(weights_encoder is not None):
+            print("=> loading encoder '{}'".format(weights_encoder))
+            checkpoint = torch.load(weights_encoder, map_location=torch.device('cpu'))
+            self.load_state_dict({k :v for k, v in checkpoint['state_dict'].items() if "encoder." in k}, strict=False)
+            print("=> loaded checencoderkpoint '{}' (epoch {})"
+                  .format(weights_encoder, checkpoint['epoch']))
+            
+            if freeze_encoder:
+                for param in self.encoder.parameters():
+                    param.requires_grad = False
     
-    def forward(self, features, captions, lengths, teacher_forcing_ratio=0):
+    def forward(self, features, captions, lengths):
         features = self.encoder(features)
         batch_size = captions.size(0)
         captions = captions[:, :-1]  # Remove last word in caption to use as input
-        use_teacher_forcing = random.random() < teacher_forcing_ratio
+        use_teacher_forcing = random.random() < self.teacher_forcing_ratio
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
             decoder_input = captions
             decoder_output = self.decoder(features, decoder_input, lengths)
         else:
             decoder_input = captions[:, 0].unsqueeze(1)  # <start> token
-            decoder_output = torch.zeros(batch_size, captions.size(1), self.vocab_size)
+            decoder_output = torch.zeros(batch_size, captions.size(1), self.vocab_size, device=captions.device)
             for t in range(0, captions.size(1)):
                 # Pass through decoder
                 decoder_output_t = self.decoder(features, decoder_input, torch.ones_like(lengths))
@@ -217,18 +222,19 @@ class Video2Caption(nn.Module):
         return self.decoder.sample(features, max_seq_length)
 
 class Video2Spot(nn.Module):
-    def __init__(self, weights=None, input_size=512, num_classes=17, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD"):
+    def __init__(self, weights=None, input_size=512, num_classes=17, vlad_k=64, window_size=15, framerate=2, pool="NetVLAD", weights_encoder=None, freeze_encoder=False):
         """
         INPUT: a Tensor of shape (batch_size,window_size,feature_size)
         OUTPUTS: a Tensor of shape (batch_size,num_classes+1)
         """
 
         super(Video2Spot, self).__init__()
-        self.encoder = VideoEncoder(input_size, num_classes, vlad_k, window_size, framerate, pool)
+        self.encoder = VideoEncoder(input_size, vlad_k, window_size, framerate, pool)
         self.head = nn.Linear(self.encoder.hidden_size, num_classes+1)
         self.drop = nn.Dropout(p=0.4)
         self.sigm = nn.Sigmoid()
         self.load_weights(weights=weights)
+        self.load_encoder(weights_encoder=weights_encoder, freeze_encoder=freeze_encoder)
 
     def load_weights(self, weights=None):
         if(weights is not None):
@@ -237,6 +243,18 @@ class Video2Spot(nn.Module):
             self.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(weights, checkpoint['epoch']))
+    
+    def load_encoder(self, weights_encoder=None, freeze_encoder=False):
+        if(weights_encoder is not None):
+            print("=> loading encoder '{}'".format(weights_encoder))
+            checkpoint = torch.load(weights_encoder, map_location=torch.device('cpu'))
+            self.load_state_dict({k :v for k, v in checkpoint['state_dict'].items() if "encoder." in k}, strict=False)
+            print("=> loaded checencoderkpoint '{}' (epoch {})"
+                  .format(weights_encoder, checkpoint['epoch']))
+            
+            if freeze_encoder:
+                for param in self.encoder.parameters():
+                    param.requires_grad = False
 
     def forward(self, inputs):
         # input_shape: (batch,frames,dim_features)
@@ -248,6 +266,11 @@ class Video2Spot(nn.Module):
 
 
 if __name__ == "__main__":
+
+    model = Video2Spot(pool="NetVLAD++", num_classes=1, framerate=2, window_size=15)
+    model.load_encoder("Benchmarks/TemporallyAwarePooling/models/ResNET_TF2_PCA512-NetVLAD++-nms-15-window-15-teacher-1-28-02-2023_12-10-03/caption/model.pth.tar")
+    print(model.encoder.pool_layer_before.clusters.requires_grad)
+
     BS =5
     T = 15
     framerate= 2

@@ -16,6 +16,8 @@ from SoccerNet.Evaluation.DenseVideoCaptioning import evaluate as evaluate_dvc
 from nlgeval import NLGEval
 from torch.nn.utils.rnn import pack_padded_sequence
 
+import wandb
+
 caption_scorer = NLGEval(no_glove=True, no_skipthoughts=True)
 
 def trainer(phase, train_loader,
@@ -70,6 +72,18 @@ def trainer(phase, train_loader,
 
             logging.info("Validation performance at epoch " +
                          str(epoch+1) + " -> " + str(performance_validation))
+            
+            wandb.log({**{
+                f"loss_train_{phase}": loss_training,
+                f"loss_val_{phase}": loss_validation,
+                "epoch" : epoch,
+                }, **{f"{k}_val" : v for k, v in performance_validation.items()}} )
+        else:
+            wandb.log({
+                f"loss_train_{phase}": loss_training,
+                f"loss_val_{phase}": loss_validation,
+                "epoch" : epoch,
+                })
 
         # Reduce LR on Plateau after patience reached
         prevLR = optimizer.param_groups[0]['lr']
@@ -122,7 +136,7 @@ def train(phase, dataloader, model, criterion, optimizer, epoch, train=False):
                 mask = pack_padded_sequence(mask[:, 1:], lengths, batch_first=True, enforce_sorted=False)[0]
                 feats = feats.cuda()
                 # compute output
-                output = model(feats, caption, lengths, teacher_forcing_ratio=1)
+                output = model(feats, caption, lengths)
 
                 loss = criterion(output[mask], target[mask])
             else:
@@ -192,7 +206,7 @@ def validate_spotting(dataloader, model, model_name):
 
     mAP = np.mean(AP)
 
-    return mAP
+    return {"mAP-sklearn" : mAP}
 
 def test_spotting(dataloader, model, model_name, save_predictions=True, NMS_window=30, NMS_threshold=0.5):
     
@@ -307,6 +321,7 @@ def test_spotting(dataloader, model, model_name, save_predictions=True, NMS_wind
                         prediction_data["confidence"] = str(confidence)
                         json_data["predictions"].append(prediction_data)
             
+            json_data["predictions"] = sorted(json_data["predictions"], key=lambda x: (int(x["half"]), int(x["position"])))
             if save_predictions:
                 os.makedirs(os.path.join("models", model_name, output_folder, game_ID), exist_ok=True)
                 with open(os.path.join("models", model_name, output_folder, game_ID, "results_spotting.json"), 'w') as output_file:
@@ -315,13 +330,33 @@ def test_spotting(dataloader, model, model_name, save_predictions=True, NMS_wind
     if split == "challenge": 
         print("Visit eval.ai to evalaute performances on Challenge set")
         return None
+    
+    tight = evaluate_spotting(SoccerNet_path=dataloader.dataset.path, 
+                Predictions_path=output_results,
+                split=dataloader.dataset.split,
+                prediction_file="results_spotting.json", 
+                version=dataloader.dataset.version, 
+                framerate=dataloader.dataset.framerate, metric="tight")
+    
+    loose = evaluate_spotting(SoccerNet_path=dataloader.dataset.path, 
+                Predictions_path=output_results,
+                split=dataloader.dataset.split,
+                prediction_file="results_spotting.json", 
+                version=dataloader.dataset.version, 
+                framerate=dataloader.dataset.framerate, metric="loose")
+    
+    medium = evaluate_spotting(SoccerNet_path=dataloader.dataset.path, 
+                Predictions_path=output_results,
+                split=dataloader.dataset.split,
+                prediction_file="results_spotting.json", 
+                version=dataloader.dataset.version, 
+                framerate=dataloader.dataset.framerate, metric="medium")
 
-    results =  evaluate_spotting(SoccerNet_path=dataloader.dataset.path, 
-                 Predictions_path=output_results,
-                 split=dataloader.dataset.split,
-                 prediction_file="results_spotting.json", 
-                 version=dataloader.dataset.version, 
-                 framerate=dataloader.dataset.framerate)
+    tight = {f"{k}_tight" : v for k, v in tight.items() if v!= None}
+    loose = {f"{k}_loose" : v for k, v in loose.items() if v!= None}
+    medium = {f"{k}_medium" : v for k, v in medium.items() if v!= None}
+
+    results = {**tight, **loose, **medium}
 
     return results
 
@@ -421,6 +456,9 @@ def test_captioning(dataloader, model, model_name, output_filename = "results_de
         print("Visit eval.ai to evalaute performances on Challenge set")
         return None
     
-    results = evaluate_dvc(SoccerNet_path=dataloader.dataset.path, Predictions_path=output_results, split=dataloader.dataset.split, version=dataloader.dataset.version, prediction_file=output_filename, include_SODA=False)
+    tight = evaluate_dvc(SoccerNet_path=dataloader.dataset.path, Predictions_path=output_results, split=dataloader.dataset.split, version=dataloader.dataset.version, prediction_file=output_filename, window_size=5, include_SODA=True)
+    loose = evaluate_dvc(SoccerNet_path=dataloader.dataset.path, Predictions_path=output_results, split=dataloader.dataset.split, version=dataloader.dataset.version, prediction_file=output_filename, window_size=30, include_SODA=True)
+
+    results = {**{f"{k}_tight" : v for k, v in tight.items()}, **{f"{k}_loose" : v for k, v in loose.items()}}
 
     return results

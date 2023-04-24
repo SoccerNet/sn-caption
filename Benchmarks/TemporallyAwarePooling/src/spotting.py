@@ -12,6 +12,7 @@ from model import Video2Spot
 from train import trainer, test_spotting
 from loss import NLLLoss
 
+import wandb
 
 def main(args):
 
@@ -21,19 +22,19 @@ def main(args):
 
     # create dataset
     if not args.test_only:
-        dataset_Train = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_train, version=args.version, framerate=args.framerate, window_size=args.window_size)
-        dataset_Valid = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_valid, version=args.version, framerate=args.framerate, window_size=args.window_size)
-        dataset_Valid_metric  = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_valid, version=args.version, framerate=args.framerate, window_size=args.window_size)
-    dataset_Test  = SoccerNetClipsTesting(path=args.SoccerNet_path, features=args.features, split=args.split_test, version=args.version, framerate=args.framerate, window_size=args.window_size)
+        dataset_Train = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_train, version=args.version, framerate=args.framerate, window_size=args.window_size_spotting)
+        dataset_Valid = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_valid, version=args.version, framerate=args.framerate, window_size=args.window_size_spotting)
+        dataset_Valid_metric  = SoccerNetClips(path=args.SoccerNet_path, features=args.features, split=args.split_valid, version=args.version, framerate=args.framerate, window_size=args.window_size_spotting)
+    dataset_Test  = SoccerNetClipsTesting(path=args.SoccerNet_path, features=args.features, split=args.split_test, version=args.version, framerate=args.framerate, window_size=args.window_size_spotting)
 
     if args.feature_dim is None:
         args.feature_dim = dataset_Test[0][1].shape[-1]
         print("feature_dim found:", args.feature_dim)
     # create model
     model = Video2Spot(weights=args.load_weights, input_size=args.feature_dim,
-                  num_classes=dataset_Test.num_classes, window_size=args.window_size, 
+                  num_classes=dataset_Test.num_classes, window_size=args.window_size_spotting, 
                   vlad_k=args.vlad_k,
-                  framerate=args.framerate, pool=args.pool).cuda()
+                  framerate=args.framerate, pool=args.pool, freeze_encoder=args.freeze_encoder, weights_encoder=args.weights_encoder).cuda()
     logging.info(model)
     total_params = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
@@ -77,7 +78,7 @@ def main(args):
 
     # test on multiple splits [test/challenge]
     for split in args.split_test:
-        dataset_Test  = SoccerNetClipsTesting(path=args.SoccerNet_path, features=args.features, split=[split], version=args.version, framerate=args.framerate, window_size=args.window_size)
+        dataset_Test  = SoccerNetClipsTesting(path=args.SoccerNet_path, features=args.features, split=[split], version=args.version, framerate=args.framerate, window_size=args.window_size_spotting)
 
         test_loader = torch.utils.data.DataLoader(dataset_Test,
             batch_size=1, shuffle=False,
@@ -87,27 +88,23 @@ def main(args):
         if results is None:
             continue
 
-        a_mAP = results["a_mAP"]
-        a_mAP_per_class = results["a_mAP_per_class"]
-        a_mAP_visible = results["a_mAP_visible"]
-        a_mAP_per_class_visible = results["a_mAP_per_class_visible"]
-        a_mAP_unshown = results["a_mAP_unshown"]
-        a_mAP_per_class_unshown = results["a_mAP_per_class_unshown"]
+        a_mAP_tight = results["a_mAP_tight"]
+        a_mAP_loose = results["a_mAP_loose"]
+        a_mAP_medium = results["a_mAP_medium"]
 
         logging.info("Best Performance at end of training ")
-        logging.info("a_mAP visibility all: " +  str(a_mAP))
-        logging.info("a_mAP visibility all per class: " +  str( a_mAP_per_class))
-        logging.info("a_mAP visibility visible: " +  str( a_mAP_visible))
-        logging.info("a_mAP visibility visible per class: " +  str( a_mAP_per_class_visible))
-        logging.info("a_mAP visibility unshown: " +  str( a_mAP_unshown))
-        logging.info("a_mAP visibility unshown per class: " +  str( a_mAP_per_class_unshown))
+        logging.info("a_mAP tight: " +  str(a_mAP_tight))
+        logging.info("a_mAP loose: " +  str(a_mAP_loose))
+        logging.info("a_mAP_medium: " +  str(a_mAP_medium))
+                
+        wandb.log({f"{k}_{split}" : results[k] for k in ["a_mAP_tight", "a_mAP_loose", "a_mAP_medium"]})
 
     return 
 
 if __name__ == '__main__':
 
 
-    parser = ArgumentParser(description='context aware loss function', formatter_class=ArgumentDefaultsHelpFormatter)
+    parser = ArgumentParser(description='SoccerNet-Caption: Spotting training', formatter_class=ArgumentDefaultsHelpFormatter)
     
     parser.add_argument('--SoccerNet_path',   required=False, type=str,   default="/path/to/SoccerNet/",     help='Path for SoccerNet' )
     parser.add_argument('--features',   required=False, type=str,   default="ResNET_TF2.npy",     help='Video features' )
@@ -155,6 +152,14 @@ if __name__ == '__main__':
     os.makedirs(os.path.join("models", args.model_name), exist_ok=True)
     log_path = os.path.join("models", args.model_name,
                             datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log'))
+    
+    run = wandb.init(
+    project="NetVLAD-spotting",
+    name=args.model_name
+    )
+
+    wandb.config.update(args)
+    
     logging.basicConfig(
         level=numeric_level,
         format=

@@ -418,7 +418,7 @@ class PredictionCaptions(Dataset):
 
         logging.info("Checking/Download features and labels locally")
         downloader = SoccerNetDownloader(self.path)
-        downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], split=split, verbose=False,randomized=True)
+        downloader.downloadGames(files=[f"1_{self.features}", f"2_{self.features}"], task="caption", split=split, verbose=False,randomized=True)
 
         self.data = list()
         self.game_feats = list()
