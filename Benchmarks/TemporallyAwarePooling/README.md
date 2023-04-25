@@ -1,6 +1,6 @@
 # Temporally-Aware Feature Pooling for Dense Video Captioning in Video Broadcasts
 
-This the code extends the paper [Temporally-Aware Feature Pooling for Action Spotting in Video Broadcasts](https://arxiv.org/pdf/2104.06779.pdf) (CVSports2021), for Dense Video Captioning task. The training is divided in two phase : spotting training phase and captioning training phase.
+This the code for the paper [SoccerNet-Caption: Dense Video Captioning for Soccer Broadcasts Commentaries](https://arxiv.org/pdf/2304.04565.pdf) (CVSports2023). The training is divided in two phase : spotting training phase and captioning training phase.
 
 ## Create Environment
 
@@ -59,7 +59,3 @@ We developed alternative pooling module
 - `--pool=NetVLAD++`: Temporally aware NetVLAD pooling module
 - `--pool=NetRVLAD`: NetRVLAD pooling module
 - `--pool=NetRVLAD++`: Temporally aware NetRVLAD pooling module
-- `--pool=MAX`: MAX pooling module
-- `--pool=MAX++`: Temporally aware MAX pooling module
-- `--pool=AVG`: AVG pooling module
-- `--pool=AVG++`: Temporally aware AVG pooling module
