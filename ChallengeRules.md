@@ -33,7 +33,7 @@ Prizes will be announced soon, stay tuned!
 
  - The winner is the individual/team who reach the highest performance on the **challenge** set.
  - The metrics taken into consideration are the **METEOR for Dense Video Captioning**.
- - The deadline to submit your results is May 30th 2023 at 11.59 pm Pacific Time.
+ - The deadline to submit your results is May 30th 2023 at 11.59 pm Anywhere on earth.
  - In order to be eligible for the prize, we require the individual/team to provide a short report describing the details of the methodology (CVPR format, max 2 pages).
 
 
