@@ -139,18 +139,12 @@ Check out our other challenges related to SoccerNet!
 
 Please cite our work if you use our dataset:
 ```
-@article{Mkhallati2023SoccerNetCaption-arxiv,
-	title = {{SoccerNet}-Caption: Dense Video Captioning for Soccer Broadcasts Commentaries},
-	author = {Mkhallati, Hassan and Cioppa, Anthony and Giancola, Silvio and Ghanem, Bernard and Van Droogenbroeck, Marc},
-	journal = arxiv,
-	volume = {abs/2304.04565},
-	year = {2023},
-	publisher = {arXiv},
-	eprint = {2304.04565},
-	keywords = {},
-	eprinttype = {arXiv},
-	doi = {10.48550/arXiv.2304.04565},
-	url = {https://doi.org/10.48550/arXiv.2304.04565}
+@inproceedings{mkhallati2023soccernet,
+  title={SoccerNet-Caption: Dense Video Captioning for Soccer Broadcasts Commentaries},
+  author={Mkhallati, Hassan and Cioppa, Anthony and Giancola, Silvio and Ghanem, Bernard and Van Droogenbroeck, Marc},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={5073--5084},
+  year={2023}
 }
 ```
 
