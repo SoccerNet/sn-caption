@@ -8,9 +8,10 @@ This the code for the paper [SoccerNet-Caption: Dense Video Captioning for Socce
 conda create -y -n soccernet-DVC python=3.8
 conda activate soccernet-DVC
 conda install -y pytorch torchvision torchtext pytorch-cuda -c pytorch -c nvidia
-pip install SoccerNet matplotlib sklearn spacy wandb
+pip install SoccerNet matplotlib scikit-learn spacy wandb
 pip install git+https://github.com/Maluuba/nlg-eval.git@master
 python -m spacy download en_core_web_sm
+pip install torchtext
 ```
 
 ## Download weights
