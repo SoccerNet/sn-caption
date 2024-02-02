@@ -1,21 +1,17 @@
 # Guidelines for the Dense Video Captioning Challenge
 
-The 1st [Dense Video Captioning Challenge]() will be held at the 
-official [CVSports Workshop](https://vap.aau.dk/cvsports/) at CVPR 2023! 
+The 2nd [Dense Video Captioning Challenge]() will be held at the official [CVSports Workshop](https://vap.aau.dk/cvsports/) at CVPR 2024! 
 Subscribe (watch) the repo to receive the latest info regarding timeline and prizes!
 
+We propose the SoccerNet challenges to encourage the development of state-of-the-art algorithm for Soccer Video Understanding.
 
-SoccerNet-v3 is a large-scale dataset build upon SoccerNet that benchmarks the tasks of action spotting, camera shot segmentation / boundary detection and replay grounding. 
-SoccerNet-v3 is composed of 300k manual annotations, span 500 complete soccer games from six main European leagues, covering three seasons from 2014 to 2017 and a total duration of 764 hours.
+ - **Dense Video Captioning**: Generate coherent caption describing soccer actions occured and localizing each caption by a timestamp.
 
-We propose the SoccerNet challenge to encourage the development of state-of-the-art algorithm for Generic Soccer Video Understanding.
- - **Dense Video Captioning**: Generatet coherent caption describing soccer actions occured and localizing each caption by a timestamp.
-
-We provide an [evaluation server](https://eval.ai/web/challenges/challenge-page/1947/overview) for the Dense Video Captioning task. 
+We provide an [evaluation server](https://eval.ai/web/challenges/challenge-page/2199/overview) for the Dense Video Captioning task. 
 The evaluation server handles predictions for the open **test** sets and the segregated **challenge** sets of each challenge.
 
-Winners will be announced at CVSports Workshop at CVPR 2023. 
-Prizes will be announced soon, stay tuned!
+Winners will be announced at CVSports Workshop at CVPR 2024. 
+Prizes and sponsors will be announced soon, stay tuned!
 
 
 ## Who can participate / How to participate?
@@ -33,7 +29,7 @@ Prizes will be announced soon, stay tuned!
 
  - The winner is the individual/team who reach the highest performance on the **challenge** set.
  - The metrics taken into consideration are the **METEOR for Dense Video Captioning**.
- - The deadline to submit your results is May 30th 2023 at 11.59 pm Pacific Time.
+ - The deadline to submit your results is May 30th 2024 at 11.59 pm Pacific Time.
  - In order to be eligible for the prize, we require the individual/team to provide a short report describing the details of the methodology (CVPR format, max 2 pages).
 
 
@@ -42,10 +38,10 @@ Prizes will be announced soon, stay tuned!
 
 Note that these dates are tentative and subject to changes if necessary.
 
- - **February 6:** Open evaluation server on the (Open) Test set.
- - **February 15:** Open evaluation server on the (Seggregated) Challenge set.
+ - **February 5:** Open evaluation server on the (Open) Test set.
+ - **February 5:** Open evaluation server on the (Seggregated) Challenge set.
  - **May 30:** Close evaluation server.
  - **June 6:** Deadline for submitting the report.
- - **June TBD:** A full-day workshop at CVPR 2023.
+ - **June TBD:** A full-day workshop at CVPR 2024.
 
 For any further doubt or concern, please raise an issue in that repository, or contact us directly on [Discord](https://discord.gg/SM8uHj9mkP).
