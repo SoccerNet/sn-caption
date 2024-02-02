@@ -2,7 +2,8 @@
 
 The task of Dense Video Captioning consists in generating engaging caption describing soccer actions and localizing each caption with a timestamp. For that, we provide 471 videos from soccer broadcast games available at two resolutions (720p and 224p) with captions. We also provide extracted features at 2 frames per second for lighter models, including the feature provided by the 2021 action spotting challenge winners, Baidu Research. The provided data also includes original comments and versions where referees, coaches, players, and teams have been anonymized or identified, as well as team lineups. The challenge set is composed of 42 separate games.
 
-Participate in the 2024 edition of our Dense Video Captioning Challenge.
+Participate in the 2024 edition of our Dense Video Captioning Challenge on our [Evaluation Server](https://eval.ai/web/challenges/challenge-page/2199/overview).
+
 This repository provides a first [Baseline](Benchmarks/TemporallyAwarePooling/) method and code for participants to get started.
 
 <p align="center"><img src="Images/logo-caption.jpg" width="640"></p>
