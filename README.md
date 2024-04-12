@@ -114,15 +114,16 @@ Then use the API to downlaod the data of interest including annotations and feat
 ```
 from SoccerNet.Downloader import SoccerNetDownloader as SNdl
 mySNdl = SNdl(LocalDirectory="path/to/SoccerNet")
-mySNdl.downloadDataTask(task="caption-2023", split=["train","valid", "test","challenge"])
+mySNdl.downloadDataTask(task="caption-2023", split=["train","valid", "test","challenge"]) # SN challenge 2023
+mySNdl.downloadDataTask(task="caption-2024", split=["train","valid", "test","challenge"]) # SN challenge 2024
 ```
 
 If you want to download the videos, you will need to fill a [NDA](https://docs.google.com/forms/d/e/1FAIpQLSfYFqjZNm4IgwGnyJXDPk2Ko_lZcbVtYX73w5lf6din5nxfmA/viewform) to get the password.
 
 ```
-mySoccerNetDownloader.password = input("Password for videos?:\n")
-mySoccerNetDownloader.downloadGames(files=["1_224p.mkv", "2_224p.mkv"], split=["train","valid","test","challenge"])
-mySoccerNetDownloader.downloadGames(files=["1_720p.mkv", "2_720p.mkv", "video.ini"], split=["train","valid","test","challenge"])
+mySNdl.password = input("Password for videos?:\n")
+mySNdl.downloadGames(files=["1_224p.mkv", "2_224p.mkv"], split=["train","valid","test","challenge"])
+mySNdl.downloadGames(files=["1_720p.mkv", "2_720p.mkv", "video.ini"], split=["train","valid","test","challenge"])
 ```
 
 ## Our other Challenges
